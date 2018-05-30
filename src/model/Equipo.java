@@ -10,7 +10,7 @@ import java.sql.*;
 
 /**
  *
- * @author victor
+ * @author Ramon Botella Ciria
  */
 public class Equipo {
 
@@ -75,33 +75,98 @@ public class Equipo {
 
     // ---------- CRUD BÁSICO
     public boolean create() {
-
-        return true;
+        boolean exito = true;
+        try(Connection conn = ConexionBd.obtener()) {
+            PreparedStatement stmt = conn.prepareStatement(
+                    "INSERT INTO equipo (nombre,ciudad,pais) VALUES (?,?,?)");
+            stmt.setString(1, getNombre());
+            stmt.setString(2, getCiudad());
+            stmt.setString(3, getPais());
+            
+            stmt.executeUpdate();
+            
+        } catch(SQLException ex) {
+            exito = false;
+        }
+        
+        return exito;
     }
 
     public boolean retrieve() {
-        // POR HACER
-        setId(33);
-        setNombre("Equipo ejemplo");
-        setCiudad("Ciudad ejemplo");
-        setPais("Pais ejemplo");
-        return true;
+        boolean exito = true;
+        try(Connection conn = ConexionBd.obtener()) {
+            PreparedStatement stmt = conn.prepareStatement(
+                    "SELECT nombre,ciudad,pais FROM equipo WHERE id = ?");
+            
+            stmt.setInt(1, getId());
+            
+            try(ResultSet rs = stmt.executeQuery()) {
+                rs.next();
+                
+                setNombre(rs.getString(1));
+                setCiudad(rs.getString(2));
+                setPais(rs.getString(3));
+            
+            }
+            
+        } catch(SQLException ex) {
+            exito = false;
+        }
+        
+        return exito;
+        
     }
 
     public boolean update() {
-        return true;
+        boolean exito = true;
+        try(Connection conn = ConexionBd.obtener()) {
+            PreparedStatement stmt = conn.prepareStatement(
+                    "UPDATE equipo SET nombre = ?, ciudad = ?, pais = ? WHERE id = ?");
+            stmt.setString(1, getNombre());
+            stmt.setString(2, getCiudad());
+            stmt.setString(3, getPais());
+            stmt.setInt(4, getId());
+            stmt.executeUpdate();
+            
+            
+        } catch(SQLException ex) {
+            exito = false;
+        }
+        return exito;
     }
 
     public boolean delete() {
-        return true;
+        boolean exito = true;
+        try(Connection conn = ConexionBd.obtener()) {
+            try(PreparedStatement stmt = conn.prepareStatement("DELETE FROM equipo WHERE id = ?")) {
+                stmt.setInt(1, getId());
+                stmt.executeUpdate();
+            }
+        }catch(SQLException ex) {
+            exito = false;
+        }
+        return exito;
     }
 
     // ----------- Otras, de instancia, relacionadas con la fk
     public List<Jugador> getJugadores() {
-        // POR HACER.
+
         List<Jugador> resultado = new ArrayList<>();
-        resultado.add(new Jugador(1, "Paco", "López", 19));
-        resultado.add(new Jugador(2, "Luisa", "Martínez", 21));
+        
+        try(Connection conn = ConexionBd.obtener()) {
+            PreparedStatement stmt = conn.prepareStatement("SELECT id, nombre, apellidos, edad, idEquipo FROM jugador WHERE idEquipo = ?");
+            stmt.setInt(1, getId());
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                while(rs.next()) {
+                    resultado.add(new Jugador(rs.getInt(1),rs.getString(2),rs.getString(3), 
+                            rs.getInt(4), rs.getInt(5)));
+                }
+            }
+            
+        }catch(SQLException ex) {
+            ex.printStackTrace();
+        }
         return resultado;
     }
 
@@ -112,14 +177,22 @@ public class Equipo {
             throw new IllegalArgumentException("Parámetro de orden de equipos no admitido");
         }
 
-        // Si la búsqueda es una cadena vacía lanzamos una select sin WHERE
-        // y si tiene algo con WHERE y varios LIKEs
-        // POR HACER
         List<Equipo> resultado = new ArrayList<>();
-        resultado.add(
-                new Equipo(1, "Halcones calvos", "Getafe", "España"));
-        resultado.add(
-                new Equipo(2, "Dumma den som läser den", "Visby", "Suecia"));
+        try(Connection conn = ConexionBd.obtener()) {
+            PreparedStatement stmt = conn.prepareStatement(
+                    "SELECT id, nombre, ciudad, pais FROM equipo");
+            
+            try(ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    resultado.add(new Equipo(rs.getInt(1), rs.getString(2), rs.getString(3), rs.getString(4)));
+                    
+                }
+            }
+            
+        } catch(SQLException ex) {
+            ex.printStackTrace();
+        }
+        
         return resultado;
 
     }

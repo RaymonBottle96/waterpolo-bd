@@ -10,7 +10,7 @@ import java.sql.*;
 
 /**
  *
- * @author victor
+ * @author Ramon Botella Ciria
  */
 public class Jugador {
 
@@ -48,6 +48,16 @@ public class Jugador {
         this(id, nombre, apellidos, edad);
         this.idEquipo = idEquipo;
     }
+    
+    public Jugador(int id, String nombre, String apellidos) {
+        this.id = id;
+        this.nombre = nombre;
+        this.apellidos = apellidos;
+    }
+    
+    public int getId() {
+        return id;
+    }
 
     public String getNombre() {
         return nombre;
@@ -80,23 +90,82 @@ public class Jugador {
     public void setIdEquipo(int idEquipo) {
         this.idEquipo = idEquipo;
     }
+    
+    
 
     // --------- OPERACIONES BD ----------------------------------------
     // ---------- CRUD BÁSICO
     public boolean create() {
-        return true;
+        boolean exito = true;
+        try(Connection conn = ConexionBd.obtener()) {
+            PreparedStatement stmt = conn.prepareStatement(
+                    "INSERT INTO jugador (nombre,apellidos,edad,idEquipo) VALUES (?,?,?,?)");
+            stmt.setString(1, getNombre());
+            stmt.setString(2, getApellidos());
+            stmt.setInt(3, getEdad());
+            stmt.setInt(4, getIdEquipo());
+            
+            stmt.executeUpdate();
+        } catch(SQLException ex) {
+            exito = false;
+        }
+        return exito;
     }
 
     public boolean retrieve() {
-        return true;
+        boolean exito = true;
+        try(Connection conn = ConexionBd.obtener()) {
+            PreparedStatement stmt = conn.prepareStatement(
+                    "SELECT nombre,apellidos,edad,idEquipo FROM jugador WHERE id = ?");
+           
+            stmt.setInt(1, getIdEquipo());
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                rs.next();
+                setNombre(rs.getString(1));
+                setApellidos(rs.getString(2));
+                setEdad(rs.getInt(3));
+                setIdEquipo(rs.getInt(4));
+                
+            }
+            
+        } catch(SQLException ex) {
+            exito = false;
+        }
+        
+        return exito;
     }
 
     public boolean update() {
-        return true;
+        boolean exito = true;
+        try(Connection conn = ConexionBd.obtener()) {
+            PreparedStatement stmt = conn.prepareStatement(
+                    "UPDATE jugador SET nombre = ?, apellidos = ?, edad = ?, idEquipo WHERE id = ?");
+            stmt.setString(1, getNombre());
+            stmt.setString(2, getApellidos());
+            stmt.setInt(3, getEdad());
+            stmt.setInt(4, getIdEquipo());
+            stmt.setInt(5, getId());
+            stmt.executeUpdate();
+            
+            
+        } catch(SQLException ex) {
+            exito = false;
+        }
+        return exito;
     }
 
     public boolean delete() {
-        return true;
+        boolean exito = true;
+        try(Connection conn = ConexionBd.obtener()) {
+            try(PreparedStatement stmt = conn.prepareStatement("DELETE FROM equipo WHERE id = ?")) {
+                stmt.setInt(1, getId());
+                stmt.executeUpdate();
+            }
+        }catch(SQLException ex) {
+            exito = false;
+        }
+        return exito;
     }
 
     // ----------- Otras, de clase, no relacionadas con ÉSTE (this) objeto
@@ -106,8 +175,21 @@ public class Jugador {
         Master: 26 años o más. */
 
         List<Jugador> resultado = new ArrayList<>();
-        resultado.add(new Jugador("Paco", "López", 19));
-        resultado.add(new Jugador("Luisa", "Martínez", 21));
+        try(Connection conn = ConexionBd.obtener()) {
+            PreparedStatement stmt = conn.prepareStatement(
+                    "SELECT id, nombre, apellidos, edad, idEquipo FROM jugador");
+            
+            try(ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    resultado.add(new Jugador(rs.getInt(1), rs.getString(2), rs.getString(3), rs.getInt(4), rs.getInt(5)));
+                    
+                }
+            }
+            
+        } catch(SQLException ex) {
+            ex.printStackTrace();
+        }
+        
         return resultado;
     }
 }

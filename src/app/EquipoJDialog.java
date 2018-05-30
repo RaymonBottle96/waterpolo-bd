@@ -7,7 +7,7 @@ package app;
 import model.*;
 /**
  *
- * @author victor
+ * @author Ramon Botella Ciria
  */
 public class EquipoJDialog extends javax.swing.JDialog {
 
@@ -156,8 +156,14 @@ public class EquipoJDialog extends javax.swing.JDialog {
     private void jButtonGuardarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonGuardarActionPerformed
         boolean exito;
         if (equipo.getId() < 1) {
-           exito = equipo.create();
+            equipo.setNombre(jTextFieldNombre.getText());
+            equipo.setCiudad(jTextFieldCiudad.getText());
+            equipo.setPais(jTextFieldPais.getText());
+            exito = equipo.create();
         } else {
+           equipo.setNombre(jTextFieldNombre.getText());
+           equipo.setCiudad(jTextFieldCiudad.getText());
+           equipo.setPais(jTextFieldPais.getText());
            exito = equipo.update();
         }
         this.accion = ACCION_GUARDAR;
